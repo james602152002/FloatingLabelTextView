@@ -921,7 +921,6 @@ class FloatingLabelTextView : AppCompatTextView {
     }
 
     fun customizeDownArrow(drawableId: Int, down_arrow_width: Int) {
-        enableDownArrow = true
         downArrowSize = down_arrow_width
         val context = context
         val drawable = ContextCompat.getDrawable(context, drawableId)
