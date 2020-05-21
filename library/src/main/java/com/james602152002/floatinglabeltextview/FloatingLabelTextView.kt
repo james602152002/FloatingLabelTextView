@@ -156,8 +156,8 @@ class FloatingLabelTextView : AppCompatTextView {
         textWatcher {
             afterTextChanged {
                 when (it.isNullOrEmpty()) {
-                    true -> startAnimator(0f, 1f)
-                    else -> startAnimator(1f, 0f)
+                    true -> startAnimator(1f, 0f)
+                    else -> startAnimator(0f, 1f)
                 }
             }
         }
