@@ -19,13 +19,10 @@ import android.text.style.CharacterStyle
 import android.text.style.ForegroundColorSpan
 import android.util.AttributeSet
 import android.util.TypedValue
-import android.view.MotionEvent
 import android.view.View.OnFocusChangeListener
-import android.view.ViewConfiguration
 import android.view.animation.AccelerateInterpolator
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.core.content.ContextCompat
-import androidx.core.text.HtmlCompat
 import com.pawegio.kandroid.textWatcher
 import java.lang.ref.SoftReference
 import java.util.*
@@ -96,25 +93,40 @@ class FloatingLabelTextView : AppCompatTextView {
     private var errorDisabled = false
 
     private var clearButtonPaint: Paint? = null
-    var clearBtnSize = 0
+    var downArrowSize = 0
         set(value) {
             field = value
             invalidate()
         }
-    private var uniCode: String? = null
-    private var clearBtnColor = 0
-    private var enableClearBtn = false
-    private var clearBtnHorizontalMargin = 0
+    private var downArrowColor = 0
+    var enableDownArrow = false
+        set(value) {
+            field = value
+            if (value) {
+                initDownArrow()
+                clearButtonPaint!!.apply {
+                    textSize = downArrowSize.toFloat()
+                    color = downArrowColor
+                }
+                customizeDownArrow(R.drawable.ic_selector_down_arrow, downArrowSize)
+            } else {
+                clearButtonPaint = null
+                bounds = null
+            }
+            updatePadding()
+        }
+    private var downArrowHorizontalMargin = 0
     private var bounds: Rect? = null
-    private var clearBtnBitmap: Bitmap? = null
+    private var downArrowBitmap: Bitmap? = null
     private var bitmapHeight = 0
 
     private var multilineMode = false
 
-    private var touchClearBtn = false
-    private var downX = 0f
-    private var downY = 0f
-    private val touchSlop: Int by lazy { ViewConfiguration.get(context).scaledTouchSlop }
+    private var touchDownArrow = false
+
+    //    private var downX = 0f
+//    private var downY = 0f
+//    private val touchSlop: Int by lazy { ViewConfiguration.get(context).scaledTouchSlop }
     private var clearPaintAlphaRatio = 1.0f
     private var terminateClick = false
     private var showClearButtonWithoutFocus = false
@@ -233,20 +245,20 @@ class FloatingLabelTextView : AppCompatTextView {
             R.styleable.FloatingLabelTextView_j_flt_multiline_mode_enable,
             false
         )
-        enableClearBtn =
-            typedArray.getBoolean(R.styleable.FloatingLabelTextView_j_flt_enable_clear_btn, false)
-        clearBtnColor = typedArray.getColor(
-            R.styleable.FloatingLabelTextView_j_flt_clear_btn_color,
+        enableDownArrow =
+            typedArray.getBoolean(R.styleable.FloatingLabelTextView_j_flt_enable_down_arrow, false)
+        downArrowColor = typedArray.getColor(
+            R.styleable.FloatingLabelTextView_j_flt_down_arrow_color,
             -0x56000000
         )
-        clearBtnHorizontalMargin = typedArray.getDimensionPixelOffset(
-            R.styleable.FloatingLabelTextView_j_flt_clear_btn_horizontal_margin,
+        downArrowHorizontalMargin = typedArray.getDimensionPixelOffset(
+            R.styleable.FloatingLabelTextView_j_flt_down_arrow_horizontal_margin,
             dp2px(5f)
         )
-        val clearBtnId =
-            typedArray.getResourceId(R.styleable.FloatingLabelTextView_j_flt_clear_btn_id, -1)
+        val downArrowId =
+            typedArray.getResourceId(R.styleable.FloatingLabelTextView_j_flt_down_arrow_id, -1)
         showClearButtonWithoutFocus = typedArray.getBoolean(
-            R.styleable.FloatingLabelTextView_j_flt_show_clear_btn_without_focus,
+            R.styleable.FloatingLabelTextView_j_flt_show_down_arrow_without_focus,
             false
         )
         showMaxLength =
@@ -287,8 +299,8 @@ class FloatingLabelTextView : AppCompatTextView {
             setBackgroundDrawable(background)
         } else setBackgroundColor(0)
         backgroundTypedArray.recycle()
-        clearBtnSize = typedArray.getDimensionPixelOffset(
-            R.styleable.FloatingLabelTextView_j_flt_clear_btn_size,
+        downArrowSize = typedArray.getDimensionPixelOffset(
+            R.styleable.FloatingLabelTextView_j_flt_down_arrow_size,
             (textSize * .8f).toInt()
         )
         typedArray.recycle()
@@ -339,15 +351,15 @@ class FloatingLabelTextView : AppCompatTextView {
         includeFontPadding = false
         initFocusChangeListener()
         setSingleLine()
-        if (enableClearBtn) {
-            enableClearBtn(true)
+        if (enableDownArrow) {
+            enableDownArrow = true
         }
         updatePadding()
-        if (clearBtnId >= 0) {
-            customizeClearBtn(clearBtnId, clearBtnSize)
+        if (downArrowId >= 0) {
+            customizeDownArrow(downArrowId, downArrowSize)
         }
         if (showClearButtonWithoutFocus) {
-            enableClearBtn(true)
+            enableDownArrow = true
         }
         updateLabel()
     }
@@ -438,13 +450,13 @@ class FloatingLabelTextView : AppCompatTextView {
         super.setPadding(
             left,
             top + labelVerticalMargin + labelTextSize.toInt(),
-            right + getClearBtnModePadding(),
+            right + getDownArrowModePadding(),
             bottom + dividerStrokeWidth + dividerVerticalMargin + if (!errorDisabled) (errorTextSize * 1.2f).toInt() + (dividerVerticalMargin shl 1) else 0
         )
     }
 
-    private fun getClearBtnModePadding(): Int {
-        return if (enableClearBtn) clearBtnSize + (clearBtnHorizontalMargin shl 1) else 0
+    private fun getDownArrowModePadding(): Int {
+        return if (enableDownArrow) downArrowSize + (downArrowHorizontalMargin shl 1) else 0
     }
 
     private fun updatePadding() {
@@ -568,7 +580,7 @@ class FloatingLabelTextView : AppCompatTextView {
             dividerPaint
         )
         if (hasFocus || showClearButtonWithoutFocus) {
-            drawClearBtn(canvas, scrollX)
+            drawDownArrow(canvas, scrollX)
         }
         if (showMaxLength) drawMaxLength(
             canvas,
@@ -580,7 +592,7 @@ class FloatingLabelTextView : AppCompatTextView {
     private fun drawSpannableString(
         canvas: Canvas,
         hint: CharSequence?,
-        paint: TextPaint?,
+        paint: TextPaint,
         start_x: Int,
         start_y: Int
     ) {
@@ -592,7 +604,7 @@ class FloatingLabelTextView : AppCompatTextView {
         if (paint != errorPaint)
             ellipsizeHint = TextUtils.ellipsize(
                 ellipsizeHint, paint,
-                (width - mPaddingLeft - mPaddingRight - labelHorizontalMargin - getClearBtnModePadding()).toFloat(),
+                (width - mPaddingLeft - mPaddingRight - labelHorizontalMargin - getDownArrowModePadding()).toFloat(),
                 TextUtils.TruncateAt.END
             )
         if (ellipsizeHint is SpannableString) {
@@ -608,7 +620,7 @@ class FloatingLabelTextView : AppCompatTextView {
                 )
 
                 // measure the length of the span
-                xEnd = xStart + paint!!.measureText(spannableString, i, next)
+                xEnd = xStart + paint.measureText(spannableString, i, next)
 
                 // draw the highlight (background color) first
                 val bgSpans =
@@ -653,42 +665,45 @@ class FloatingLabelTextView : AppCompatTextView {
                 ellipsizeHint.length,
                 xStart,
                 start_y.toFloat(),
-                paint!!
+                paint
             )
         }
     }
 
-    private fun drawClearBtn(canvas: Canvas, scrollX: Int) {
-        if (enableClearBtn && text.isNotEmpty() && clearButtonPaint != null) {
-            if (clearBtnBitmap == null) {
-                val alpha =
-                    ((clearBtnColor shr 24 and 0xFF) * clearPaintAlphaRatio).toInt()
-                val color = (alpha shl 24) + (clearBtnColor and 0x00FFFFFF)
-                clearButtonPaint!!.color = color
-                if (uniCode == null)
-                    return
-                val spanned =
-                    HtmlCompat.fromHtml(uniCode!!, HtmlCompat.FROM_HTML_MODE_COMPACT).toString()
-
-                if (bounds == null) bounds = Rect()
-                clearButtonPaint!!.getTextBounds(spanned, 0, spanned.length, bounds)
-                canvas.drawText(
-                    spanned,
-                    width - mPaddingRight + scrollX - (clearBtnSize + clearButtonPaint!!.measureText(
-                        spanned
-                    )) * .5f - clearBtnHorizontalMargin,
-                    mPaddingTop + labelTextSize + (labelVerticalMargin + bounds!!.height() + textPartHeight + dividerVerticalMargin shr 1),
-                    clearButtonPaint!!
-                )
-            } else {
-                clearButtonPaint!!.alpha = (clearPaintAlphaRatio * 255).toInt()
+    private fun drawDownArrow(canvas: Canvas, scrollX: Int) {
+        if (enableDownArrow && text.isNotEmpty() && clearButtonPaint != null) {
+//            if (downArrowBitmap == null) {
+//                val alpha =
+//                    ((downArrowColor shr 24 and 0xFF) * clearPaintAlphaRatio).toInt()
+//                val color = (alpha shl 24) + (downArrowColor and 0x00FFFFFF)
+//                clearButtonPaint!!.color = color
+//                if (uniCode == null)
+//                    return
+//                val spanned =
+//                    HtmlCompat.fromHtml(uniCode!!, HtmlCompat.FROM_HTML_MODE_COMPACT).toString()
+//
+//                if (bounds == null) bounds = Rect()
+//                clearButtonPaint!!.getTextBounds(spanned, 0, spanned.length, bounds)
+//                canvas.drawText(
+//                    spanned,
+//                    width - mPaddingRight + scrollX - (downArrowSize + clearButtonPaint!!.measureText(
+//                        spanned
+//                    )) * .5f - downArrowHorizontalMargin,
+//                    mPaddingTop + labelTextSize + (labelVerticalMargin + bounds!!.height() + textPartHeight + dividerVerticalMargin shr 1),
+//                    clearButtonPaint!!
+//                )
+//            } else {
+            clearButtonPaint!!.alpha = (clearPaintAlphaRatio * 255).toInt()
+            downArrowBitmap?.let {
                 canvas.drawBitmap(
-                    clearBtnBitmap!!,
-                    (width - mPaddingRight + scrollX - clearBtnSize - clearBtnHorizontalMargin).toFloat(),
+                    it,
+                    (width - mPaddingRight + scrollX - downArrowSize - downArrowHorizontalMargin).toFloat(),
                     mPaddingTop + labelTextSize + (labelVerticalMargin + hintTextSize + dividerVerticalMargin - bitmapHeight) * .5f,
                     clearButtonPaint
                 )
             }
+
+//            }
         }
     }
 
@@ -905,50 +920,9 @@ class FloatingLabelTextView : AppCompatTextView {
         updatePadding()
     }
 
-    // enable default clear button
-    fun enableClearBtn(enable: Boolean) {
-        enableClearBtn = enable
-        if (enable) {
-            initClearBtn()
-            clearButtonPaint!!.textSize = clearBtnSize.toFloat()
-            val tf = Typeface.createFromAsset(
-                resources.assets,
-                "floating_label_edit_text_iconfont.ttf"
-            )
-            clearButtonPaint!!.typeface = tf
-            clearButtonPaint!!.color = clearBtnColor
-            uniCode = "&#xe724;"
-        } else {
-            clearButtonPaint = null
-            bounds = null
-        }
-        updatePadding()
-    }
-
-    // customize your clear button by ttf
-    fun customizeClearBtn(
-        newTypeface: Typeface?,
-        newUnicode: String?,
-        newColor: Int,
-        newClearBtnSize: Int
-    ) {
-        enableClearBtn = true
-        initClearBtn()
-        clearButtonPaint!!.apply {
-            textSize = newClearBtnSize.toFloat()
-            typeface = newTypeface
-            color = newColor
-        }
-
-        this.uniCode = newUnicode
-        clearBtnColor = newColor
-        this.clearBtnSize = newClearBtnSize
-        updatePadding()
-    }
-
-    fun customizeClearBtn(drawableId: Int, clear_btn_width: Int) {
-        enableClearBtn = true
-        clearBtnSize = clear_btn_width
+    fun customizeDownArrow(drawableId: Int, down_arrow_width: Int) {
+        enableDownArrow = true
+        downArrowSize = down_arrow_width
         val context = context
         val drawable = ContextCompat.getDrawable(context, drawableId)
         val resources = resources
@@ -962,12 +936,12 @@ class FloatingLabelTextView : AppCompatTextView {
             width = drawable.getIntrinsicWidth()
             height = drawable.getIntrinsicHeight()
         }
-        bitmapHeight = (height * clear_btn_width / width)
+        bitmapHeight = (height * down_arrow_width / width)
         val destinationHeight = bitmapHeight
-        if (height > destinationHeight || width > clear_btn_width) {
+        if (height > destinationHeight || width > down_arrow_width) {
             val halfHeight = height shr 1
             val halfWidth = width shr 1
-            while (halfHeight / sampleSize > destinationHeight && halfWidth / sampleSize > clear_btn_width) {
+            while (halfHeight / sampleSize > destinationHeight && halfWidth / sampleSize > down_arrow_width) {
                 sampleSize *= 2
             }
         }
@@ -977,14 +951,14 @@ class FloatingLabelTextView : AppCompatTextView {
         val oldBitmap = createBitmap(drawable, resources, drawableId, options)
         width = oldBitmap!!.width
         height = oldBitmap.height
-        val matrix: Matrix? = Matrix()
-        val scaleX = clear_btn_width.toFloat() / width
+        val matrix = Matrix()
+        val scaleX = down_arrow_width.toFloat() / width
         val scaleY = destinationHeight.toFloat() / height
-        matrix!!.postScale(scaleX, scaleY)
-        clearBtnBitmap = SoftReference(
+        matrix.postScale(scaleX, scaleY)
+        downArrowBitmap = SoftReference(
             Bitmap.createBitmap(oldBitmap, 0, 0, width, height, matrix, true)
         ).get()
-        initClearBtn()
+        initDownArrow()
         updatePadding()
     }
 
@@ -1025,7 +999,7 @@ class FloatingLabelTextView : AppCompatTextView {
         return bitmap
     }
 
-    private fun initClearBtn() {
+    private fun initDownArrow() {
         if (clearButtonPaint == null) {
             clearButtonPaint = Paint(Paint.ANTI_ALIAS_FLAG)
         }
@@ -1041,85 +1015,85 @@ class FloatingLabelTextView : AppCompatTextView {
         isSingleLine = !enable
     }
 
-    fun setClear_btn_color(clear_btn_color: Int) {
-        this.clearBtnColor = clear_btn_color
+    fun setClear_btn_color(down_arrow_color: Int) {
+        this.downArrowColor = down_arrow_color
         invalidate()
     }
 
     fun getClear_btn_color(): Int {
-        return clearBtnColor
+        return downArrowColor
     }
 
     fun getClear_btn_horizontal_margin(): Int {
-        return clearBtnHorizontalMargin
+        return downArrowHorizontalMargin
     }
 
-    fun setClear_btn_horizontal_margin(clear_btn_horizontal_margin: Int) {
-        this.clearBtnHorizontalMargin = clear_btn_horizontal_margin
+    fun setClear_btn_horizontal_margin(down_arrow_horizontal_margin: Int) {
+        this.downArrowHorizontalMargin = down_arrow_horizontal_margin
         invalidate()
     }
 
     //Even your edit text doesn't have focus, your clear button still show at right.
     fun showClearButtonWithoutFocus() {
         showClearButtonWithoutFocus = true
-        enableClearBtn(true)
+        enableDownArrow = true
     }
 
-    @SuppressLint("ClickableViewAccessibility")
-    override fun onTouchEvent(event: MotionEvent): Boolean {
-        if (enableClearBtn && (hasFocus || showClearButtonWithoutFocus)) {
-            when (event.action) {
-                MotionEvent.ACTION_DOWN -> {
-                    downX = event.x
-                    downY = event.y
-                    touchClearBtn = touchClearBtn(downX, downY)
-                    if (touchClearBtn) {
-                        fadeClearBtnIcon(true)
-                        post { requestFocus() }
-                        return true
-                    }
-                }
-                MotionEvent.ACTION_MOVE -> if (touchClearBtn && (Math.abs(downX - event.x) >= touchSlop || Math.abs(
-                        downY - event.y
-                    ) >= touchSlop)
-                ) {
-                    touchClearBtn = false
-                    terminateClick = true
-                }
-                MotionEvent.ACTION_UP -> {
-                    val interruptActionUp = touchClearBtn || terminateClick
-                    if (touchClearBtn) {
-                        text = null
-                    }
-                    reset()
-                    if (interruptActionUp) return false
-                }
-                MotionEvent.ACTION_CANCEL -> reset()
-            }
-        }
-        return super.onTouchEvent(event)
-    }
+//    @SuppressLint("ClickableViewAccessibility")
+//    override fun onTouchEvent(event: MotionEvent): Boolean {
+//        if (enableDownArrow && (hasFocus || showClearButtonWithoutFocus)) {
+//            when (event.action) {
+//                MotionEvent.ACTION_DOWN -> {
+//                    downX = event.x
+//                    downY = event.y
+//                    touchDownArrow = touchDownArrow(downX, downY)
+//                    if (touchDownArrow) {
+//                        fadeDownArrowIcon(true)
+//                        post { requestFocus() }
+//                        return true
+//                    }
+//                }
+//                MotionEvent.ACTION_MOVE -> if (touchDownArrow && (Math.abs(downX - event.x) >= touchSlop || Math.abs(
+//                        downY - event.y
+//                    ) >= touchSlop)
+//                ) {
+//                    touchDownArrow = false
+//                    terminateClick = true
+//                }
+//                MotionEvent.ACTION_UP -> {
+//                    val interruptActionUp = touchDownArrow || terminateClick
+//                    if (touchDownArrow) {
+//                        text = null
+//                    }
+//                    reset()
+//                    if (interruptActionUp) return false
+//                }
+//                MotionEvent.ACTION_CANCEL -> reset()
+//            }
+//        }
+//        return super.onTouchEvent(event)
+//    }
 
-    private fun touchClearBtn(x: Float, y: Float): Boolean {
+    private fun touchDownArrow(x: Float, y: Float): Boolean {
         val width = width
         if (measuredWidth <= 0) {
             val w = MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED)
             measure(w, w)
         }
         val right = if (width != 0) width else measuredWidth
-        val clearBtnWidth =
-            (clearBtnSize + (clearBtnHorizontalMargin shl 1) + scaleX)
-        val clearBtnTop = (mPaddingTop + labelTextSize)
-        val clearBtnBottom =
-            clearBtnTop + labelVerticalMargin + textPartHeight + dividerVerticalMargin
-        return x >= right - clearBtnWidth && x <= right && y >= clearBtnTop && y <= clearBtnBottom
+        val downArrowWidth =
+            (downArrowSize + (downArrowHorizontalMargin shl 1) + scaleX)
+        val downArrowTop = (mPaddingTop + labelTextSize)
+        val downArrowBottom =
+            downArrowTop + labelVerticalMargin + textPartHeight + dividerVerticalMargin
+        return x >= right - downArrowWidth && x <= right && y >= downArrowTop && y <= downArrowBottom
     }
 
     @Synchronized
-    private fun fadeClearBtnIcon(focus: Boolean) {
+    private fun fadeDownArrowIcon(focus: Boolean) {
         val defaultValue = 1f
         val focusValue = 0.5f
-        val fadeClearBtnAnimator = ObjectAnimator.ofFloat(
+        val fadeDownArrowAnimator = ObjectAnimator.ofFloat(
             this, "clear_paint_alpha_ratio",
             if (focus) defaultValue else focusValue, if (focus) focusValue else defaultValue
         ).apply {
@@ -1129,9 +1103,9 @@ class FloatingLabelTextView : AppCompatTextView {
     }
 
     private fun reset() {
-        if (terminateClick || touchClearBtn) fadeClearBtnIcon(false)
+        if (terminateClick || touchDownArrow) fadeDownArrowIcon(false)
         terminateClick = false
-        touchClearBtn = false
+        touchDownArrow = false
     }
 
     private fun setClear_paint_alpha_ratio(clear_paint_alpha_ratio: Float) {
