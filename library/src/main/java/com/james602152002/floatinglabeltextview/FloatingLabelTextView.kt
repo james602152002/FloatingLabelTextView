@@ -99,6 +99,11 @@ class FloatingLabelTextView : AppCompatTextView {
     private var startValue = -1f
     private var isMustFill = false
 
+    private val widgetLayerRect = RectF()
+    private val widgetPaint: Paint
+    private val errorAnimRect = RectF()
+    private val errorAnimPaint: Paint
+
     constructor(context: Context) : super(context) {
         init(context, null)
     }
@@ -118,6 +123,8 @@ class FloatingLabelTextView : AppCompatTextView {
         dividerPaint = Paint(antiAliasFlag)
         errorPaint = TextPaint(antiAliasFlag)
         maxLengthPaint = TextPaint(antiAliasFlag)
+        widgetPaint = Paint(antiAliasFlag)
+        errorAnimPaint = Paint(antiAliasFlag)
     }
 
     @Suppress("DEPRECATION")
@@ -410,6 +417,7 @@ class FloatingLabelTextView : AppCompatTextView {
         setPadding(mPaddingLeft, mPaddingTop, mPaddingRight, mPaddingBottom)
     }
 
+    @SuppressLint("DrawAllocation")
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
         val width = width
@@ -417,25 +425,27 @@ class FloatingLabelTextView : AppCompatTextView {
         val currentTextSize =
             hintTextSize + (labelTextSize - hintTextSize) * floatLabelAnimPercentage
         labelPaint.textSize = currentTextSize
-        val scrollX = scrollX
+//        val scrollX = scrollX
         if (text.isNotEmpty()) {
             labelPaint.alpha = (255 * floatLabelAnimPercentage).toInt()
         } else {
             labelPaint.alpha = 255
         }
+
         val labelPaintDy =
-            (mPaddingTop + labelTextSize + currentTextSize * (1 - floatLabelAnimPercentage) * .93f) as Int
-        if (label != null) {
+            (mPaddingTop + labelTextSize + currentTextSize * (1 - floatLabelAnimPercentage) * .93f).toInt()
+        label?.let {
             drawSpannableString(
                 canvas,
-                label,
+                it,
                 labelPaint,
                 scrollX + labelHorizontalMargin,
                 labelPaintDy
             )
         }
+
         val dividerY =
-            (mPaddingTop + labelTextSize + labelVerticalMargin + textPartHeight * lineCount + (dividerStrokeWidth shr 1) + dividerVerticalMargin) as Int
+            (mPaddingTop + labelTextSize + labelVerticalMargin + textPartHeight * lineCount + (dividerStrokeWidth shr 1) + dividerVerticalMargin).toInt()
         if (!isError) {
             dividerPaint.color = if (hasFocus) highlightColor else dividerColor
         } else {
@@ -451,7 +461,7 @@ class FloatingLabelTextView : AppCompatTextView {
                 if (errorHorizontalMargin > 0 && errorPaint.shader == null) {
                     val marginRatio = errorHorizontalMargin.toFloat() / width
                     val gradientRatio = .025f
-                    val shader = LinearGradient(
+                    errorPaint.shader = LinearGradient(
                         0f,
                         0f,
                         width.toFloat(),
@@ -465,20 +475,20 @@ class FloatingLabelTextView : AppCompatTextView {
                         ),
                         Shader.TileMode.CLAMP
                     )
-                    errorPaint.shader = shader
                 } else if (errorHorizontalMargin == 0) {
                     errorPaint.shader = null
                 }
             }
-            val widgetLayerRect = RectF(
-                0f, 0f, (width + scrollX).toFloat(),
-                height.toFloat()
-            )
-            canvas.saveLayer(
-                widgetLayerRect,
-                Paint(),
-                Canvas.ALL_SAVE_FLAG
-            )
+
+            widgetLayerRect.set(0f, 0f, (width + scrollX).toFloat(), height.toFloat())
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                canvas.saveLayer(widgetLayerRect, widgetPaint)
+            } else {
+                @Suppress("DEPRECATION")
+                canvas.saveLayer(widgetLayerRect, widgetPaint, Canvas.ALL_SAVE_FLAG)
+            }
+
             drawSpannableString(canvas, error, errorPaint, startX, errorPaintDy)
             if (startX < 0 && startX + maxDx < width) {
                 drawSpannableString(
@@ -490,17 +500,29 @@ class FloatingLabelTextView : AppCompatTextView {
                 )
             }
             if (maxLengthTextWidth > 0) {
-                val paint = Paint()
-                paint.color = Color.WHITE
-                val rect = RectF(
+//                val paint = Paint()
+//                paint.color = Color.WHITE
+//                val rect = RectF(
+//                    (width + scrollX - maxLengthTextWidth - errorHorizontalMargin).toFloat(),
+//                    dividerY.toFloat(),
+//                    (width + scrollX).toFloat(),
+//                    height.toFloat()
+//                )
+                errorAnimRect.set(
                     (width + scrollX - maxLengthTextWidth - errorHorizontalMargin).toFloat(),
                     dividerY.toFloat(),
                     (width + scrollX).toFloat(),
                     height.toFloat()
                 )
-                paint.xfermode = PorterDuffXfermode(PorterDuff.Mode.CLEAR)
-                canvas.drawRect(rect, paint)
-                paint.xfermode = null
+//                paint.xfermode = PorterDuffXfermode(PorterDuff.Mode.CLEAR)
+//                canvas.drawRect(rect, paint)
+//                paint.xfermode = null
+                errorAnimPaint.apply {
+                    color = Color.WHITE
+                    xfermode = PorterDuffXfermode(PorterDuff.Mode.CLEAR)
+                    canvas.drawRect(errorAnimRect, errorAnimPaint)
+                    xfermode = null
+                }
                 canvas.restore()
             }
         }
@@ -534,9 +556,11 @@ class FloatingLabelTextView : AppCompatTextView {
         var xStart = start_x.toFloat()
         var xEnd: Float
         if (paint != errorPaint)
-            ellipsizeHint = TextUtils.ellipsize(ellipsizeHint, paint,
-            (width - mPaddingLeft - mPaddingRight - labelHorizontalMargin - getClearBtnModePadding()).toFloat(),
-            TextUtils.TruncateAt.END)
+            ellipsizeHint = TextUtils.ellipsize(
+                ellipsizeHint, paint,
+                (width - mPaddingLeft - mPaddingRight - labelHorizontalMargin - getClearBtnModePadding()).toFloat(),
+                TextUtils.TruncateAt.END
+            )
         if (ellipsizeHint is SpannableString) {
             val spannableString = ellipsizeHint
             var i = 0
@@ -589,7 +613,14 @@ class FloatingLabelTextView : AppCompatTextView {
                 i = next
             }
         } else {
-            canvas.drawText(ellipsizeHint!!, 0, ellipsizeHint.length, xStart, start_y.toFloat(), paint!!)
+            canvas.drawText(
+                ellipsizeHint!!,
+                0,
+                ellipsizeHint.length,
+                xStart,
+                start_y.toFloat(),
+                paint!!
+            )
         }
     }
 
@@ -600,10 +631,11 @@ class FloatingLabelTextView : AppCompatTextView {
                     ((clearBtnColor shr 24 and 0xFF) * clearPaintAlphaRatio).toInt()
                 val color = (alpha shl 24) + (clearBtnColor and 0x00FFFFFF)
                 clearButtonPaint!!.color = color
-                if(uniCode == null)
+                if (uniCode == null)
                     return
-                val spanned = HtmlCompat.fromHtml(uniCode!!,HtmlCompat.FROM_HTML_MODE_COMPACT).toString()
-                
+                val spanned =
+                    HtmlCompat.fromHtml(uniCode!!, HtmlCompat.FROM_HTML_MODE_COMPACT).toString()
+
                 if (bounds == null) bounds = Rect()
                 clearButtonPaint!!.getTextBounds(spanned, 0, spanned.length, bounds)
                 canvas.drawText(
@@ -918,7 +950,7 @@ class FloatingLabelTextView : AppCompatTextView {
             typeface = newTypeface
             color = newColor
         }
-       
+
         this.uniCode = newUnicode
         clearBtnColor = newColor
         this.clearBtnSize = newClearBtnSize
@@ -1053,6 +1085,7 @@ class FloatingLabelTextView : AppCompatTextView {
         enableClearBtn(true)
     }
 
+    @SuppressLint("ClickableViewAccessibility")
     override fun onTouchEvent(event: MotionEvent): Boolean {
         if (enableClearBtn && (hasFocus || showClearButtonWithoutFocus)) {
             when (event.action) {
