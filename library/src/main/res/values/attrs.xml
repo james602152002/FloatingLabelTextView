@@ -21,7 +21,6 @@
         <attr name="j_flt_down_arrow_color" format="color" />
         <attr name="j_flt_down_arrow_horizontal_margin" format="dimension" />
         <attr name="j_flt_down_arrow_id" format="reference" />
-        <attr name="j_flt_show_down_arrow_without_focus" format="boolean" />
         <attr name="j_flt_show_text_length" format="boolean" />
         <attr name="j_flt_text_length_display_color" format="color" />
 <!--        <attr name="j_flt_number_decimal_validation" format="string" />-->

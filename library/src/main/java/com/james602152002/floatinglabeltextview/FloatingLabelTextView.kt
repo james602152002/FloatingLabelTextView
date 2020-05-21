@@ -129,7 +129,7 @@ class FloatingLabelTextView : AppCompatTextView {
 //    private val touchSlop: Int by lazy { ViewConfiguration.get(context).scaledTouchSlop }
     private var clearPaintAlphaRatio = 1.0f
     private var terminateClick = false
-    private var showClearButtonWithoutFocus = false
+//    private var showClearButtonWithoutFocus = false
 
     private var maxLength = 0
     private var showMaxLength = false
@@ -257,10 +257,6 @@ class FloatingLabelTextView : AppCompatTextView {
         )
         val downArrowId =
             typedArray.getResourceId(R.styleable.FloatingLabelTextView_j_flt_down_arrow_id, -1)
-        showClearButtonWithoutFocus = typedArray.getBoolean(
-            R.styleable.FloatingLabelTextView_j_flt_show_down_arrow_without_focus,
-            false
-        )
         showMaxLength =
             typedArray.getBoolean(R.styleable.FloatingLabelTextView_j_flt_show_text_length, false)
         textLengthDisplayColor = typedArray.getColor(
@@ -351,15 +347,9 @@ class FloatingLabelTextView : AppCompatTextView {
         includeFontPadding = false
         initFocusChangeListener()
         setSingleLine()
-        if (enableDownArrow) {
-            enableDownArrow = true
-        }
         updatePadding()
         if (downArrowId >= 0) {
             customizeDownArrow(downArrowId, downArrowSize)
-        }
-        if (showClearButtonWithoutFocus) {
-            enableDownArrow = true
         }
         updateLabel()
     }
@@ -579,9 +569,9 @@ class FloatingLabelTextView : AppCompatTextView {
             dividerY.toFloat(),
             dividerPaint
         )
-        if (hasFocus || showClearButtonWithoutFocus) {
-            drawDownArrow(canvas, scrollX)
-        }
+//        if (hasFocus || showClearButtonWithoutFocus) {
+        drawDownArrow(canvas, scrollX)
+//        }
         if (showMaxLength) drawMaxLength(
             canvas,
             width + scrollX,
@@ -1032,11 +1022,11 @@ class FloatingLabelTextView : AppCompatTextView {
         invalidate()
     }
 
-    //Even your edit text doesn't have focus, your clear button still show at right.
-    fun showClearButtonWithoutFocus() {
-        showClearButtonWithoutFocus = true
-        enableDownArrow = true
-    }
+//    //Even your edit text doesn't have focus, your clear button still show at right.
+//    fun showClearButtonWithoutFocus() {
+//        showClearButtonWithoutFocus = true
+//        enableDownArrow = true
+//    }
 
 //    @SuppressLint("ClickableViewAccessibility")
 //    override fun onTouchEvent(event: MotionEvent): Boolean {
