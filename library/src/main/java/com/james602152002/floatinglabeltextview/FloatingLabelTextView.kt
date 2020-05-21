@@ -25,6 +25,7 @@ import android.view.ViewConfiguration
 import android.view.animation.AccelerateInterpolator
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.core.content.ContextCompat
+import androidx.core.text.HtmlCompat
 import java.lang.ref.SoftReference
 import java.util.*
 import kotlin.math.roundToInt
@@ -406,91 +407,86 @@ class FloatingLabelTextView : AppCompatTextView {
     }
 
     private fun updatePadding() {
-        setPadding(
-            mPaddingLeft.toInt(),
-            mPaddingTop.toInt(),
-            mPaddingRight.toInt(),
-            mPaddingBottom.toInt()
-        )
+        setPadding(mPaddingLeft, mPaddingTop, mPaddingRight, mPaddingBottom)
     }
 
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
         val width = width
-        labelPaint!!.color = if (hasFocus) highlightColor else mHintTextColor
-        val current_text_size =
+        labelPaint.color = if (hasFocus) highlightColor else mHintTextColor
+        val currentTextSize =
             hintTextSize + (labelTextSize - hintTextSize) * floatLabelAnimPercentage
-        labelPaint!!.textSize = current_text_size
+        labelPaint.textSize = currentTextSize
         val scrollX = scrollX
-        if (text.length() > 0) {
-            labelPaint!!.alpha = (255 * floatLabelAnimPercentage).toInt()
+        if (text.isNotEmpty()) {
+            labelPaint.alpha = (255 * floatLabelAnimPercentage).toInt()
         } else {
-            labelPaint!!.alpha = 255
+            labelPaint.alpha = 255
         }
-        val label_paint_dy =
-            (mPaddingTop + labelTextSize + current_text_size * (1 - floatLabelAnimPercentage) * .93f) as Int
+        val labelPaintDy =
+            (mPaddingTop + labelTextSize + currentTextSize * (1 - floatLabelAnimPercentage) * .93f) as Int
         if (label != null) {
             drawSpannableString(
                 canvas,
                 label,
                 labelPaint,
                 scrollX + labelHorizontalMargin,
-                label_paint_dy
+                labelPaintDy
             )
         }
-        val divider_y =
+        val dividerY =
             (mPaddingTop + labelTextSize + labelVerticalMargin + textPartHeight * lineCount + (dividerStrokeWidth shr 1) + dividerVerticalMargin) as Int
         if (!isError) {
-            dividerPaint!!.color = if (hasFocus) highlightColor else dividerColor
+            dividerPaint.color = if (hasFocus) highlightColor else dividerColor
         } else {
-            dividerPaint!!.color = errorColor
-            val error_paint_dy = (divider_y + errorTextSize + dividerVerticalMargin).toInt()
-            val error_text_width = errorPaint!!.measureText(error.toString())
-            val hint_repeat_space_width = width / 3
-            val max_dx = hint_repeat_space_width + error_text_width
-            val start_x =
-                errorHorizontalMargin - (max_dx * errorPercentage).toInt() + scrollX
-            errorPaint!!.color = errorColor
+            dividerPaint.color = errorColor
+            val errorPaintDy = (dividerY + errorTextSize + dividerVerticalMargin).toInt()
+            val errorTextWidth = errorPaint.measureText(error.toString())
+            val hintRepeatSpaceWidth = width / 3
+            val maxDx = hintRepeatSpaceWidth + errorTextWidth
+            val startX =
+                errorHorizontalMargin - (maxDx * errorPercentage).toInt() + scrollX
+            errorPaint.color = errorColor
             if (errorAnimator != null) {
-                if (errorHorizontalMargin > 0 && errorPaint!!.shader == null) {
-                    val margin_ratio = errorHorizontalMargin.toFloat() / width
-                    val gradient_ratio = .025f
+                if (errorHorizontalMargin > 0 && errorPaint.shader == null) {
+                    val marginRatio = errorHorizontalMargin.toFloat() / width
+                    val gradientRatio = .025f
                     val shader = LinearGradient(
-                        0,
-                        0,
-                        width,
-                        0,
+                        0f,
+                        0f,
+                        width.toFloat(),
+                        0f,
                         intArrayOf(0, errorColor, errorColor, 0),
                         floatArrayOf(
-                            margin_ratio,
-                            margin_ratio + gradient_ratio,
-                            1 - margin_ratio - gradient_ratio,
-                            1 - margin_ratio
+                            marginRatio,
+                            marginRatio + gradientRatio,
+                            1 - marginRatio - gradientRatio,
+                            1 - marginRatio
                         ),
                         Shader.TileMode.CLAMP
                     )
-                    errorPaint!!.shader = shader
-                } else if (errorHorizontalMargin.toInt() == 0) {
-                    errorPaint!!.shader = null
+                    errorPaint.shader = shader
+                } else if (errorHorizontalMargin == 0) {
+                    errorPaint.shader = null
                 }
             }
-            val widget_layer_rect = RectF(
+            val widgetLayerRect = RectF(
                 0f, 0f, (width + scrollX).toFloat(),
                 height.toFloat()
             )
             canvas.saveLayer(
-                widget_layer_rect,
+                widgetLayerRect,
                 Paint(),
                 Canvas.ALL_SAVE_FLAG
             )
-            drawSpannableString(canvas, error, errorPaint, start_x, error_paint_dy)
-            if (start_x < 0 && start_x + max_dx < width) {
+            drawSpannableString(canvas, error, errorPaint, startX, errorPaintDy)
+            if (startX < 0 && startX + maxDx < width) {
                 drawSpannableString(
                     canvas,
                     error,
                     errorPaint,
-                    (start_x + max_dx).toInt(),
-                    error_paint_dy
+                    (startX + maxDx).toInt(),
+                    errorPaintDy
                 )
             }
             if (maxLengthTextWidth > 0) {
@@ -498,7 +494,7 @@ class FloatingLabelTextView : AppCompatTextView {
                 paint.color = Color.WHITE
                 val rect = RectF(
                     (width + scrollX - maxLengthTextWidth - errorHorizontalMargin).toFloat(),
-                    divider_y.toFloat(),
+                    dividerY.toFloat(),
                     (width + scrollX).toFloat(),
                     height.toFloat()
                 )
@@ -510,10 +506,10 @@ class FloatingLabelTextView : AppCompatTextView {
         }
         canvas.drawLine(
             scrollX.toFloat(),
-            divider_y.toFloat(),
+            dividerY.toFloat(),
             width + scrollX.toFloat(),
-            divider_y.toFloat(),
-            dividerPaint!!
+            dividerY.toFloat(),
+            dividerPaint
         )
         if (hasFocus || showClearButtonWithoutFocus) {
             drawClearBtn(canvas, scrollX)
@@ -521,7 +517,7 @@ class FloatingLabelTextView : AppCompatTextView {
         if (showMaxLength) drawMaxLength(
             canvas,
             width + scrollX,
-            divider_y + errorTextSize + dividerVerticalMargin
+            dividerY + errorTextSize + dividerVerticalMargin
         )
     }
 
@@ -533,20 +529,18 @@ class FloatingLabelTextView : AppCompatTextView {
         start_y: Int
     ) {
         // draw each span one at a time
-        var hint = hint
+        var ellipsizeHint = hint
         var next: Int
         var xStart = start_x.toFloat()
         var xEnd: Float
-        if (paint !== errorPaint) hint = TextUtils.ellipsize(
-            hint, paint,
+        if (paint != errorPaint)
+            ellipsizeHint = TextUtils.ellipsize(ellipsizeHint, paint,
             (width - mPaddingLeft - mPaddingRight - labelHorizontalMargin - getClearBtnModePadding()).toFloat(),
-            TextUtils.TruncateAt.END
-        )
-        if (hint is SpannableString) {
-            val spannableString = hint
+            TextUtils.TruncateAt.END)
+        if (ellipsizeHint is SpannableString) {
+            val spannableString = ellipsizeHint
             var i = 0
             while (i < spannableString.length) {
-
 
                 // find the next span transition
                 next = spannableString.nextSpanTransition(
@@ -595,18 +589,21 @@ class FloatingLabelTextView : AppCompatTextView {
                 i = next
             }
         } else {
-            canvas.drawText(hint!!, 0, hint.length, xStart, start_y.toFloat(), paint!!)
+            canvas.drawText(ellipsizeHint!!, 0, ellipsizeHint.length, xStart, start_y.toFloat(), paint!!)
         }
     }
 
     private fun drawClearBtn(canvas: Canvas, scrollX: Int) {
-        if (enableClearBtn && text.isNotEmpty()) {
+        if (enableClearBtn && text.isNotEmpty() && clearButtonPaint != null) {
             if (clearBtnBitmap == null) {
                 val alpha =
                     ((clearBtnColor shr 24 and 0xFF) * clearPaintAlphaRatio).toInt()
                 val color = (alpha shl 24) + (clearBtnColor and 0x00FFFFFF)
                 clearButtonPaint!!.color = color
-                val spanned = Html.fromHtml(uniCode).toString()
+                if(uniCode == null)
+                    return
+                val spanned = HtmlCompat.fromHtml(uniCode!!,HtmlCompat.FROM_HTML_MODE_COMPACT).toString()
+                
                 if (bounds == null) bounds = Rect()
                 clearButtonPaint!!.getTextBounds(spanned, 0, spanned.length, bounds)
                 canvas.drawText(
@@ -620,7 +617,7 @@ class FloatingLabelTextView : AppCompatTextView {
             } else {
                 clearButtonPaint!!.alpha = (clearPaintAlphaRatio * 255).toInt()
                 canvas.drawBitmap(
-                    clearBtnBitmap,
+                    clearBtnBitmap!!,
                     (width - mPaddingRight + scrollX - clearBtnSize - clearBtnHorizontalMargin).toFloat(),
                     mPaddingTop + labelTextSize + (labelVerticalMargin + hintTextSize + dividerVerticalMargin - bitmapHeight) * .5f,
                     clearButtonPaint
@@ -649,16 +646,16 @@ class FloatingLabelTextView : AppCompatTextView {
         dy: Float
     ) {
         if (maxLengthTextWidth == 0) return
-        maxLengthPaint!!.color = textLengthDisplayColor
-        val text_length: Int = text.length()
-        val length_str_builder = StringBuilder()
-        length_str_builder.append(text_length).append("/").append(maxLength)
-        val length_str = length_str_builder.toString()
+        maxLengthPaint.color = textLengthDisplayColor
+        val textLength: Int = text.length
+        val lengthStrBuilder = StringBuilder()
+        lengthStrBuilder.append(textLength).append("/").append(maxLength)
+        val lengthStr = lengthStrBuilder.toString()
         canvas.drawText(
-            length_str,
+            lengthStr,
             dx - maxLengthTextWidth - mPaddingRight.toFloat(),
             dy,
-            maxLengthPaint!!
+            maxLengthPaint
         )
     }
 
@@ -678,7 +675,7 @@ class FloatingLabelTextView : AppCompatTextView {
 
     fun setError_text_size(error_text_size: Float) {
         this.errorTextSize = error_text_size
-        errorPaint!!.textSize = error_text_size
+        errorPaint.textSize = error_text_size
         measureTextMaxLength()
         updatePadding()
     }
@@ -688,33 +685,33 @@ class FloatingLabelTextView : AppCompatTextView {
     }
 
     fun setLabelMargins(horizontal_margin: Int, vertical_margin: Int) {
-        labelHorizontalMargin = horizontal_margin.toShort()
-        labelVerticalMargin = vertical_margin.toShort()
+        labelHorizontalMargin = horizontal_margin
+        labelVerticalMargin = vertical_margin
         updatePadding()
     }
 
     fun setThickness(thickness: Int) {
-        dividerStrokeWidth = thickness.toShort()
-        dividerPaint!!.strokeWidth = dividerStrokeWidth.toFloat()
+        dividerStrokeWidth = thickness
+        dividerPaint.strokeWidth = dividerStrokeWidth.toFloat()
         updatePadding()
     }
 
     fun getThickness(): Int {
-        return dividerStrokeWidth.toInt()
+        return dividerStrokeWidth
     }
 
     fun setErrorMargin(horizontal_margin: Int) {
-        errorHorizontalMargin = horizontal_margin.toShort()
+        errorHorizontalMargin = horizontal_margin
         updatePadding()
     }
 
     fun setDivider_vertical_margin(divider_vertical_margin: Int) {
-        this.dividerVerticalMargin = divider_vertical_margin.toShort()
+        this.dividerVerticalMargin = divider_vertical_margin
         updatePadding()
     }
 
     fun getDivider_vertical_margin(): Int {
-        return dividerVerticalMargin.toInt()
+        return dividerVerticalMargin
     }
 
     fun getLabel(): CharSequence? {
@@ -727,23 +724,23 @@ class FloatingLabelTextView : AppCompatTextView {
         updateLabel()
     }
 
-    fun setAnimDuration(ANIM_DURATION: Int) {
-        var ANIM_DURATION = ANIM_DURATION
-        if (ANIM_DURATION < 0) ANIM_DURATION = 800
-        this.mAnimDuration = ANIM_DURATION.toShort()
+    fun setAnimDuration(animDuration: Int) {
+        var calAnimDuration = animDuration
+        if (calAnimDuration < 0) calAnimDuration = 800
+        this.mAnimDuration = calAnimDuration
     }
 
     fun getAnimDuration(): Int {
         return mAnimDuration
     }
 
-    fun setErrorAnimDuration(ERROR_ANIM_DURATION: Int) {
-        var ERROR_ANIM_DURATION = ERROR_ANIM_DURATION
-        if (ERROR_ANIM_DURATION < 0) ERROR_ANIM_DURATION = 8000
-        mErrorAnimDuration = ERROR_ANIM_DURATION.toShort()
+    fun setErrorAnimDuration(errorAnimDuration: Int) {
+        var calErrorAnimDuration = errorAnimDuration
+        if (calErrorAnimDuration < 0) calErrorAnimDuration = 8000
+        mErrorAnimDuration = calErrorAnimDuration
     }
 
-    fun getErrorAnimDuration(): Short {
+    fun getErrorAnimDuration(): Int {
         return mErrorAnimDuration
     }
 
@@ -800,27 +797,30 @@ class FloatingLabelTextView : AppCompatTextView {
     }
 
     private fun startErrorAnimation() {
-        val error_length = errorPaint!!.measureText(error.toString())
+        val errorLength = errorPaint.measureText(error.toString())
         val w = MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED)
         val h = MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED)
         measure(w, h)
         val width = if (width > 0) width else measuredWidth
-        val max_length_width = 0
+        val maxLengthWidth = 0
         if (showMaxLength) {
             maxLengthTextWidth = measureTextMaxLength()
         }
-        if (error_length > width - (errorHorizontalMargin shl 1) - max_length_width) {
+        if (errorLength > width - (errorHorizontalMargin shl 1) - maxLengthWidth) {
             errorPercentage = 0f
-            if (errorAnimator == null) errorAnimator =
-                ObjectAnimator.ofFloat(this, "error_percentage", 0f, 1f)
-            errorAnimator!!.repeatCount = ValueAnimator.INFINITE
-            errorAnimator!!.repeatMode = ValueAnimator.RESTART
-            errorAnimator!!.startDelay = mAnimDuration.toLong()
-            var duration =
-                (mErrorAnimDuration * error_length / width).toShort()
-            if (duration < 0) duration = 8000
-            errorAnimator!!.duration = duration.toLong()
-            post { if (errorAnimator != null) errorAnimator!!.start() }
+            if (errorAnimator == null)
+                errorAnimator = ObjectAnimator.ofFloat(this, "error_percentage", 0f, 1f)
+
+            errorAnimator!!.apply {
+                repeatCount = ValueAnimator.INFINITE
+                repeatMode = ValueAnimator.RESTART
+                startDelay = mAnimDuration.toLong()
+                var calDuration =
+                    (mErrorAnimDuration * errorLength / width).toShort()
+                if (calDuration < 0) calDuration = 8000
+                duration = calDuration.toLong()
+                post { errorAnimator?.start() }
+            }
         } else {
             errorPercentage = 0f
         }
@@ -833,7 +833,7 @@ class FloatingLabelTextView : AppCompatTextView {
 
     override fun setTextSize(size: Float) {
         hintTextSize = size
-        textPartHeight = (Math.round(hintTextSize) * 1.2f).toShort()
+        textPartHeight = (hintTextSize.roundToInt() * 1.2f).toInt()
         super.setTextSize(size)
     }
 
@@ -841,7 +841,7 @@ class FloatingLabelTextView : AppCompatTextView {
         val c = context
         val r = c.resources
         hintTextSize = TypedValue.applyDimension(unit, size, r.displayMetrics)
-        textPartHeight = (Math.round(hintTextSize) * 1.2f).toShort()
+        textPartHeight = (hintTextSize.roundToInt() * 1.2f).toInt()
         super.setTextSize(unit, size)
     }
 
@@ -906,19 +906,22 @@ class FloatingLabelTextView : AppCompatTextView {
 
     // customize your clear button by ttf
     fun customizeClearBtn(
-        typeface: Typeface?,
-        uni_code: String?,
-        color: Int,
-        clear_btn_size: Int
+        newTypeface: Typeface?,
+        newUnicode: String?,
+        newColor: Int,
+        newClearBtnSize: Int
     ) {
         enableClearBtn = true
         initClearBtn()
-        clearButtonPaint!!.textSize = clear_btn_size.toFloat()
-        clearButtonPaint!!.typeface = typeface
-        clearButtonPaint!!.color = color
-        this.uniCode = uni_code
-        clearBtnColor = color
-        this.clearBtnSize = clear_btn_size
+        clearButtonPaint!!.apply {
+            textSize = newClearBtnSize.toFloat()
+            typeface = newTypeface
+            color = newColor
+        }
+       
+        this.uniCode = newUnicode
+        clearBtnColor = newColor
+        this.clearBtnSize = newClearBtnSize
         updatePadding()
     }
 
@@ -1032,7 +1035,7 @@ class FloatingLabelTextView : AppCompatTextView {
     }
 
     fun getClear_btn_size(): Int {
-        return clearBtnSize.toInt()
+        return clearBtnSize
     }
 
     fun getClear_btn_horizontal_margin(): Int {
@@ -1176,16 +1179,19 @@ class FloatingLabelTextView : AppCompatTextView {
     }
 
     private fun updateLabel() {
-        if (isMustFill) {
-            label = SpannableString(savedLabel.toString() + " *").apply {
-                setSpan(
-                    ForegroundColorSpan(Color.RED),
-                    length - 1, length,
-                    Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
-                )
+        label = when (isMustFill) {
+            true -> {
+                SpannableString(savedLabel.toString() + " *").apply {
+                    setSpan(
+                        ForegroundColorSpan(Color.RED),
+                        length - 1, length,
+                        Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
+                    )
+                }
             }
-        } else {
-            label = savedLabel
+            else -> {
+                savedLabel
+            }
         }
         invalidate()
     }
