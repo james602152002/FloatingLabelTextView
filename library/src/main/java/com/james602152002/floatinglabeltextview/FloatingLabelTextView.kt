@@ -26,6 +26,7 @@ import android.view.animation.AccelerateInterpolator
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.core.content.ContextCompat
 import androidx.core.text.HtmlCompat
+import com.pawegio.kandroid.textWatcher
 import java.lang.ref.SoftReference
 import java.util.*
 import kotlin.math.roundToInt
@@ -152,6 +153,14 @@ class FloatingLabelTextView : AppCompatTextView {
         maxLengthPaint = TextPaint(antiAliasFlag)
         widgetPaint = Paint(antiAliasFlag)
         errorAnimPaint = Paint(antiAliasFlag)
+        textWatcher {
+            afterTextChanged {
+                when (it.isNullOrEmpty()) {
+                    true -> startAnimator(0f, 1f)
+                    else -> startAnimator(1f, 0f)
+                }
+            }
+        }
     }
 
     @Suppress("DEPRECATION")
@@ -353,9 +362,7 @@ class FloatingLabelTextView : AppCompatTextView {
                     startAnimator(1f, 0f)
                 }
             }
-            if (customizeListener != null) {
-                customizeListener!!.onFocusChange(v, hasFocus)
-            }
+            customizeListener?.onFocusChange(v, hasFocus)
         }
     }
 
