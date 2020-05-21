@@ -36,11 +36,24 @@ class FloatingLabelTextView : AppCompatTextView {
     private var labelVerticalMargin = 0
     private val labelPaint: TextPaint
 
-    private var dividerStrokeWidth = 0
+    var dividerStrokeWidth = 0
+        set(value) {
+            field = value
+            dividerPaint.strokeWidth = dividerStrokeWidth.toFloat()
+            updatePadding()
+        }
     private val dividerPaint: Paint
 
-    private var dividerVerticalMargin = 0
-    private var errorHorizontalMargin = 0
+    var dividerVerticalMargin = 0
+        set(value) {
+            field = value
+            updatePadding()
+        }
+    var errorHorizontalMargin = 0
+        set(value) {
+            field = value
+            updatePadding()
+        }
     private val errorPaint: TextPaint
 
     private var highlightColor = 0
@@ -55,9 +68,19 @@ class FloatingLabelTextView : AppCompatTextView {
     private var mPaddingBottom = 0
     private var textPartHeight = -1
 
-    private var labelTextSize = 0f
+    var labelTextSize = 0f
+        set(value) {
+            field = value
+            updatePadding()
+        }
     private var hintTextSize = 0f
-    private var errorTextSize = 0f
+    var errorTextSize = 0f
+        set(value) {
+            field = value
+            errorPaint.textSize = value
+            measureTextMaxLength()
+            updatePadding()
+        }
     private var floatLabelAnimPercentage = 0f
     private var mAnimDuration = 0
     private var mErrorAnimDuration = 0
@@ -72,7 +95,11 @@ class FloatingLabelTextView : AppCompatTextView {
     private var errorDisabled = false
 
     private var clearButtonPaint: Paint? = null
-    private var clearBtnSize = 0
+    var clearBtnSize = 0
+        set(value) {
+            field = value
+            invalidate()
+        }
     private var uniCode: String? = null
     private var clearBtnColor = 0
     private var enableClearBtn = false
@@ -696,60 +723,15 @@ class FloatingLabelTextView : AppCompatTextView {
         postInvalidate()
     }
 
-    fun getLabel_text_size(): Float {
-        return labelTextSize
-    }
-
-    fun setLabel_text_size(label_text_size: Float) {
-        this.labelTextSize = label_text_size
-        updatePadding()
-    }
-
-    fun setError_text_size(error_text_size: Float) {
-        this.errorTextSize = error_text_size
-        errorPaint.textSize = error_text_size
-        measureTextMaxLength()
-        updatePadding()
-    }
-
-    fun getError_text_size(): Float {
-        return errorTextSize
-    }
-
     fun setLabelMargins(horizontal_margin: Int, vertical_margin: Int) {
         labelHorizontalMargin = horizontal_margin
         labelVerticalMargin = vertical_margin
         updatePadding()
     }
 
-    fun setThickness(thickness: Int) {
-        dividerStrokeWidth = thickness
-        dividerPaint.strokeWidth = dividerStrokeWidth.toFloat()
-        updatePadding()
-    }
-
-    fun getThickness(): Int {
-        return dividerStrokeWidth
-    }
-
-    fun setErrorMargin(horizontal_margin: Int) {
-        errorHorizontalMargin = horizontal_margin
-        updatePadding()
-    }
-
-    fun setDivider_vertical_margin(divider_vertical_margin: Int) {
-        this.dividerVerticalMargin = divider_vertical_margin
-        updatePadding()
-    }
-
-    fun getDivider_vertical_margin(): Int {
-        return dividerVerticalMargin
-    }
-
     fun getLabel(): CharSequence? {
         return label
     }
-
 
     fun setLabel(hint: CharSequence?) {
         savedLabel = hint
@@ -1059,15 +1041,6 @@ class FloatingLabelTextView : AppCompatTextView {
 
     fun getClear_btn_color(): Int {
         return clearBtnColor
-    }
-
-    fun setClear_btn_size(clear_btn_size: Int) {
-        this.clearBtnSize = clear_btn_size
-        invalidate()
-    }
-
-    fun getClear_btn_size(): Int {
-        return clearBtnSize
     }
 
     fun getClear_btn_horizontal_margin(): Int {
