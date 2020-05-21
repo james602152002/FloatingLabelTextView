@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <declare-styleable name="FloatingLabelTextView">
+        <attr name="j_flt_colorHighlight" format="color" />
+        <attr name="j_flt_colorDivider" format="color" />
+        <attr name="j_flt_colorError" format="color" />
+        <attr name="j_flt_hint" format="string" />
+        <attr name="j_flt_thickness" format="dimension" />
+        <attr name="j_flt_label_horizontal_margin" format="dimension" />
+        <attr name="j_flt_label_vertical_margin" format="dimension" />
+        <attr name="j_flt_label_textSize" format="dimension" />
+        <attr name="j_flt_divider_vertical_margin" format="dimension" />
+        <attr name="j_flt_error_horizontal_margin" format="dimension" />
+        <attr name="j_flt_error_textSize" format="dimension" />
+        <attr name="j_flt_float_anim_duration" format="integer" />
+        <attr name="j_flt_error_anim_duration" format="integer" />
+        <attr name="j_flt_error_disable" format="boolean" />
+        <attr name="j_flt_multiline_mode_enable" format="boolean" />
+        <attr name="j_flt_enable_clear_btn" format="boolean" />
+        <attr name="j_flt_clear_btn_size" format="dimension" />
+        <attr name="j_flt_clear_btn_color" format="color" />
+        <attr name="j_flt_clear_btn_horizontal_margin" format="dimension" />
+        <attr name="j_flt_clear_btn_id" format="reference" />
+        <attr name="j_flt_show_clear_btn_without_focus" format="boolean" />
+        <attr name="j_flt_show_text_length" format="boolean" />
+        <attr name="j_flt_text_length_display_color" format="color" />
+<!--        <attr name="j_flt_number_decimal_validation" format="string" />-->
+        <attr name="j_flt_must_fill_type" format="boolean" />
+    </declare-styleable>
+</resources>
