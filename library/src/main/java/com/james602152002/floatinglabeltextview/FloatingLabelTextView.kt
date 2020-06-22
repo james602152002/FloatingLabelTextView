@@ -661,28 +661,7 @@ class FloatingLabelTextView : AppCompatTextView {
     }
 
     private fun drawDownArrow(canvas: Canvas, scrollX: Int) {
-        if (enableDownArrow && text.isNotEmpty() && clearButtonPaint != null) {
-//            if (downArrowBitmap == null) {
-//                val alpha =
-//                    ((downArrowColor shr 24 and 0xFF) * clearPaintAlphaRatio).toInt()
-//                val color = (alpha shl 24) + (downArrowColor and 0x00FFFFFF)
-//                clearButtonPaint!!.color = color
-//                if (uniCode == null)
-//                    return
-//                val spanned =
-//                    HtmlCompat.fromHtml(uniCode!!, HtmlCompat.FROM_HTML_MODE_COMPACT).toString()
-//
-//                if (bounds == null) bounds = Rect()
-//                clearButtonPaint!!.getTextBounds(spanned, 0, spanned.length, bounds)
-//                canvas.drawText(
-//                    spanned,
-//                    width - mPaddingRight + scrollX - (downArrowSize + clearButtonPaint!!.measureText(
-//                        spanned
-//                    )) * .5f - downArrowHorizontalMargin,
-//                    mPaddingTop + labelTextSize + (labelVerticalMargin + bounds!!.height() + textPartHeight + dividerVerticalMargin shr 1),
-//                    clearButtonPaint!!
-//                )
-//            } else {
+        if (enableDownArrow && clearButtonPaint != null) {
             clearButtonPaint!!.alpha = (clearPaintAlphaRatio * 255).toInt()
             downArrowBitmap?.let {
                 canvas.drawBitmap(
@@ -692,8 +671,6 @@ class FloatingLabelTextView : AppCompatTextView {
                     clearButtonPaint
                 )
             }
-
-//            }
         }
     }
 
