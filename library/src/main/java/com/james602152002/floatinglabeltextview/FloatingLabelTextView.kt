@@ -23,7 +23,7 @@ import android.view.View.OnFocusChangeListener
 import android.view.animation.AccelerateInterpolator
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.core.content.ContextCompat
-import com.pawegio.kandroid.textWatcher
+import com.bitzsoft.kandroid.textWatcher
 import java.lang.ref.SoftReference
 import java.util.*
 import kotlin.math.roundToInt
@@ -819,7 +819,7 @@ class FloatingLabelTextView : AppCompatTextView {
                 repeatMode = ValueAnimator.RESTART
                 startDelay = mAnimDuration.toLong()
                 var calDuration =
-                    (mErrorAnimDuration * errorLength / width).toShort()
+                    (mErrorAnimDuration * errorLength / width).toInt()
                 if (calDuration < 0) calDuration = 8000
                 duration = calDuration.toLong()
                 post { errorAnimator?.start() }
@@ -1059,13 +1059,12 @@ class FloatingLabelTextView : AppCompatTextView {
     private fun fadeDownArrowIcon(focus: Boolean) {
         val defaultValue = 1f
         val focusValue = 0.5f
-        val fadeDownArrowAnimator = ObjectAnimator.ofFloat(
+        ObjectAnimator.ofFloat(
             this, "clear_paint_alpha_ratio",
             if (focus) defaultValue else focusValue, if (focus) focusValue else defaultValue
         ).apply {
             duration = 500
-            post { this?.start() }
-        }
+        }.start()
     }
 
     private fun reset() {
