@@ -143,6 +143,7 @@ class FloatingLabelTextView : AppCompatTextView {
     private val widgetPaint: Paint
     private val errorAnimRect = RectF()
     private val errorAnimPaint: Paint
+    var textAllowEmpty = false
 
     constructor(context: Context) : super(context) {
         init(context, null)
@@ -167,7 +168,7 @@ class FloatingLabelTextView : AppCompatTextView {
         errorAnimPaint = Paint(antiAliasFlag)
         textWatcher {
             afterTextChanged {
-                when (it.isNullOrEmpty()) {
+                when (textAllowEmpty || it.isNullOrEmpty()) {
                     true -> startAnimator(1f, 0f)
                     else -> startAnimator(0f, 1f)
                 }
