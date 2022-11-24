@@ -168,7 +168,7 @@ class FloatingLabelTextView : AppCompatTextView {
         errorAnimPaint = Paint(antiAliasFlag)
         textWatcher {
             afterTextChanged {
-                when (textAllowEmpty || it.isNullOrEmpty()) {
+                when (!textAllowEmpty && it.isNullOrEmpty()) {
                     true -> startAnimator(1f, 0f)
                     else -> startAnimator(0f, 1f)
                 }
