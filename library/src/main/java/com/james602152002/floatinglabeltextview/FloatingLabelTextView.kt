@@ -139,6 +139,23 @@ class FloatingLabelTextView : AppCompatTextView {
     private var startValue = -1f
     private var isMustFill = false
 
+    //if mark changed then updateLabel
+    var mustFillMark: CharSequence? = " *"
+        set(value) {
+            if (field != value) {
+                field = value
+                updateLabel()
+            }
+        }
+    var normalMark: CharSequence? = null
+        set(value) {
+            if (field != value) {
+                field = value
+                updateLabel()
+            }
+        }
+
+
     private val widgetLayerRect = RectF()
     private val widgetPaint: Paint
     private val errorAnimRect = RectF()
@@ -1133,19 +1150,31 @@ class FloatingLabelTextView : AppCompatTextView {
 
     private fun updateLabel() {
         label = when (isMustFill) {
-            true -> {
-                SpannableString(savedLabel.toString() + " *").apply {
+            true -> initMustFillSpan()
+            else -> initNormalSpan()
+        }
+        invalidate()
+    }
+
+
+    private fun initMustFillSpan() = initSpan(mustFillMark)
+
+    private fun initNormalSpan() = initSpan(normalMark)
+
+    private fun initSpan(mark: CharSequence?): CharSequence? {
+        return when (mark.isNullOrEmpty()) {
+            true -> savedLabel
+            else -> SpannableString("$savedLabel$mark").apply {
+                val markLength = mark.length
+                val index = length - markLength
+                if (index in indices) {
                     setSpan(
                         ForegroundColorSpan(Color.RED),
-                        length - 1, length,
+                        index, length,
                         Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
                     )
                 }
             }
-            else -> {
-                savedLabel
-            }
         }
-        invalidate()
     }
 }
